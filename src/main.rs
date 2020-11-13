@@ -1,7 +1,8 @@
 use rand::Rng;
 use strum::{
-  EnumIter, EnumString, EnumVariantNames, IntoEnumIterator, ToString as EnumToString,
-  VariantNames,
+  EnumIter, EnumString,
+  VariantNames, EnumVariantNames,
+  IntoEnumIterator, ToString as EnumToString,
 };
 
 // #[derive(Clone,Copy)]
