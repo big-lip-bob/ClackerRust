@@ -39,14 +39,12 @@ enum AllOrOne {
 }
 
 impl AllOrOne {
-  fn is_worth(&self, game: &Clacker, throws: &Vec<(usize, usize)>) -> bool {
+  fn is_worth(&self, game: &Clacker, throws: &[(usize, usize)]) -> bool {
     match self {
       AllOrOne::TOTAL => !game.cells[throws.iter().map(|&(side, _)| side).sum::<usize>()],
       AllOrOne::INDIVIDUAL => throws
           .iter()
-          .filter(|(side, _)| !game.cells[*side])
-          .next()
-          .is_some(),
+          .any(|(side, _)| !game.cells[*side])
     }
   }
 }
@@ -105,10 +103,10 @@ impl Clacker {
     self.throws += 1;
     self.toggled_cells >= self.goal_cells
   }
-  fn check_overlap(&self, throws: &Vec<(usize, usize)>) -> bool {
+  fn check_overlap(&self, throws: &[(usize, usize)]) -> bool {
     let max = throws.iter().map(|&(side, _)| side).sum();
     let min = throws.iter().map(|&(side, _)| side).min().unwrap();
-    (min..=max).filter(|&n| !self.cells[n]).next().is_some()
+    (min..=max).any(|n| !self.cells[n])
   }
 }
 
@@ -130,9 +128,8 @@ fn prompt_loop<T: FromStr>(prompt: &str) -> T {
     print!("{} : ", prompt);
     std::io::stdout().flush().unwrap(); // println does it but print doesn't so
     match next::<T>() {
-      // i could recurse kek
       Some(t) => break t,
-      None => print!("Invalid input, Retry : "),
+      None => print!("Invalid input, Retry : "), // i could recurse kek
     };
   }
 }
@@ -195,7 +192,6 @@ fn main() {
     let choices = if throws.len() > 1 {
       match game.dice_mode {
         DiceMode::ALLORONE => {
-          // TODO : implement auto-skip
           let possible_choices_iter = AllOrOne::iter();
           let possible_choices: Vec<AllOrOne> = if game.mode == GameMode::REMOVE {
             possible_choices_iter
@@ -204,7 +200,7 @@ fn main() {
           } else {
             possible_choices_iter.collect()
           };
-          if possible_choices.len() > 0 {
+          if possible_choices.is_empty() {
             let choice = if possible_choices.len() > 1 {
               loop {
                 let choice = prompt_loop::<AllOrOne>(&format!(
@@ -222,7 +218,7 @@ fn main() {
                 };
               }
             } else {
-              let choice = possible_choices[0].clone();
+              let choice = possible_choices[0]; // Copy
               println!("Only {} is possible", choice.to_string());
               choice
             };
@@ -257,9 +253,9 @@ fn main() {
                 )) - 1; // natural | integer
                 if i > stack.len() {
                   println!(
-                    "The slot ({}) can not be out of bounds : [{};{}]",
+                    "The slot ({}) can not be out of bounds : [1;{}]",
                     i + 1,
-                    0 + 1,
+                    // 1, // 0 + 1
                     stack.len() + 1
                   );
                   continue;
